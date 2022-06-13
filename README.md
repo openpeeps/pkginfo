@@ -19,19 +19,20 @@ Use `requires` macro to determine the current package dependencies and change th
 ```nim
 import pkginfo
 
-when requires "limiter":
+when requires "toktok":
     # here you can import additional libraries or modules
     # execute blocks of code or whatever you need
 ```
 
-Another good example is to extract the `version` of a package from `.nimble` project for backwards compatibility
+Extract the `version` of a package from `.nimble` project for backwards compatibility support
 ```nim
 import pkginfo
 
-when pkg "limiter =< 0.4.0":
-    # code for older versions
-else:
-    # code for newer versions
+when requires "toktok":
+    when pkg("toktok").getVersion >= version("0.1.1"):
+        # backwards compatibility support
+    else:
+        # code for newer versions
 ```
 
 ## Roadmap

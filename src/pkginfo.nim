@@ -4,10 +4,13 @@
 #          Made by Humans from OpenPeep
 #          https://github.com/openpeep/pkginfo
 
+import semver
 import std/[macros, tables]
 
 from std/os import parentDir, getHomeDir, dirExists
-from std/strutils import strip, split, startsWith, Whitespace
+from std/strutils import strip, split, startsWith, Whitespace, parseInt
+
+export semver
 
 type
     FinderType = enum
@@ -68,7 +71,7 @@ template getVal(line: string, field = "", chSep = '"'): untyped =
             continue
     val
 
-template getDep(line: string, chSep = '"'): untyped =
+template extractDep(line: string, chSep = '"'): untyped =
     var startVal: bool
     var pkgname: string
     for ch in line:
@@ -119,7 +122,7 @@ template extractDeps(nimblePath: string) =
         elif line.startsWith "srcDir":
             srcDir = line.getVal "srcDir"
         elif line.startsWith "requires":
-            let (pkgName, pkgVersion) = line.getDep()
+            let (pkgName, pkgVersion) = line.extractDep()
             if pkgName != "nim":
                 deps.add pkgName
         else: continue # ignore anything else
@@ -144,11 +147,50 @@ macro getPkgInfo(nimblePath: static string) =
 template hasDep*(pkgName: string): untyped =
     Nimble.deps.hasKey(pkgName)
 
+template getDep*(pkgName: string): untyped =
+    if Nimble.deps.hasKey(pkgName):
+        Nimble.deps[pkgName]
+    else: nil
+
 macro requires*(pkgName: string): untyped = 
     ## Determine if current library has a dependency with given name.
     ## This macro works for all direct and indirect dependencies.
     result = newStmtList()
     result.add quote do:
         hasDep(`pkgName`)
+
+proc version*(vers: string): Version =
+    var versTuple: tuple[major, minor, patch: int, build, metadata: string]
+    let v = vers.split(".")
+    versTuple.major = parseInt v[0]
+    versTuple.minor = parseInt v[1]
+    versTuple.patch = parseInt v[2]
+    if v.len == 4:  versTuple.build = v[3]
+    if v.len == 5:  versTuple.metadata = v[4]
+    result = newVersion(versTuple.major, versTuple.minor, versTuple.patch, versTuple.build, versTuple.metadata)
+
+proc getVersion*(pkgInfo: PkgInfo): Version =
+    if pkgInfo != nil:
+        result = parseVersion(pkgInfo.version)
+
+proc getAuthor*(pkgInfo: PkgInfo): string =
+    if pkgInfo != nil:
+        result = pkgInfo.author
+
+proc getDescription*(pkgInfo: PkgInfo): string =
+    if pkgInfo != nil:
+        result = pkgInfo.description
+
+proc getLicense*(pkgInfo: PkgInfo): string =
+    if pkgInfo != nil:
+        result = pkgInfo.license
+
+macro pkg*(pkgName): untyped =
+    result = newStmtList()
+    result.add quote do:
+        let pkg = getDep(`pkgName`)
+        if pkg != nil:
+            pkg
+        else: nil
 
 getPkgInfo(getProjectPath() & "/..") # init pkginfo
