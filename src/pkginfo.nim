@@ -26,7 +26,7 @@ type
         binDir: string
         deps: Table[string, PkgInfo]
 
-    PkgInfoDefect* = object of CatchableError
+    PackageDefect* = object of CatchableError
 
 var Nimble {.compileTime.}: PkgInfo
 
@@ -38,7 +38,7 @@ template getPkgPath(pkgDirName = ""): untyped =
 
 template ensureNimblePkgsExists(): untyped =
     if not dirExists(getPkgPath()):
-        raise newException(PkgInfoDefect, "Could not find `pkgs` directory")
+        raise newException(PackageDefect, "Could not find `pkgs` directory")
 
 template find(ftype: FinderType, path: string, pattern = ""): untyped =
     staticExec("find " & path & " -type " & $ftype & " -maxdepth 1 -name " & pattern & " -print")
@@ -50,7 +50,7 @@ template getNimbleFile(nimbleProjectPath: untyped): untyped =
         # try look for `nimble-link` packages
         let nimbleLinkFile = find(File, nimbleProjectPath, "*.nimble-link")
         if nimbleLinkFile.len == 0:
-            raise newException(PkgInfoDefect, "Could not find a nimble file at\n" & nimbleProjectPath)
+            raise newException(PackageDefect, "Could not find a nimble file at\n" & nimbleProjectPath)
         nimbleFile = staticRead(nimbleLinkFile).split("\n")[0]
     nimbleFile = nimbleFile.strip()
     nimbleFile
