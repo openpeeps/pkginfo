@@ -39,8 +39,8 @@ when requires "toktok":
 ## Roadmap
 - [x] Extract deps info
 - [x] Semver support via [Semver lib](https://github.com/euantorano/semver.nim)
-- [x] Extend support for [Nimble variables](https://github.com/nim-lang/nimble#package)
-- [ ] Handle indirect deps
+- [ ] Extend support for [Nimble variables](https://github.com/nim-lang/nimble#package)
+- [x] Handle indirect deps
 - [ ] Add unit tests
 - [ ] Test with bigger projects
 
