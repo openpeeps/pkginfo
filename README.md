@@ -15,12 +15,23 @@ nimble install pkginfo
 
 ## Examples
 
-Use `pkginfo` to determine 
+Use `requires` macro to determine the current package dependencies and change the way application works.
 ```nim
 import pkginfo
 
-when requires "json":
-    import std/marshal
+when requires "limiter":
+    # here you can import additional libraries or modules
+    # execute blocks of code or whatever you need
+```
+
+Another good example is to extract the `version` of a package from `.nimble` project for backwards compatibility
+```nim
+import pkginfo
+
+when pkg "limiter =< 0.4.0":
+    # code for older versions
+else:
+    # code for newer versions
 ```
 
 ## Roadmap
