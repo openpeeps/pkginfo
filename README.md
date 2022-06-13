@@ -14,6 +14,8 @@ nimble install pkginfo
 ```
 
 ## Examples
+
+Use `pkginfo` to determine 
 ```nim
 import pkginfo
 
