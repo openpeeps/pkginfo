@@ -16,19 +16,27 @@ type
     FinderType = enum
         File = "f"
         Dir = "d"
+    
+    PkgType = enum
+        Main, Dependency
 
-    PkgInfo = ref object
+    Pkg = ref object
         version: string
         author: string
         description: string
         license: string
         srcDir: string
         binDir: string
-        deps: Table[string, PkgInfo]
+        case pkgType: PkgType:
+        of Main:
+            deps: Table[string, Pkg]
+        else: discard
 
     PackageDefect* = object of CatchableError
 
-var Nimble {.compileTime.}: PkgInfo
+var Nimble {.compileTime.}: Pkg
+
+proc getInfo(depPkgName: string)
 
 template getPkgPath(pkgDirName = ""): untyped =
     if pkgDirName.len == 0:
@@ -99,15 +107,6 @@ template initNimble(version, author, desc, license, srcDir: string, deps: seq[st
     Nimble.srcDir = srcDir
     # Nimble.deps = deps
 
-template addNimbleDep(name, version, author, desc, license, srcDir: string) =
-    Nimble.deps[name] = PkgInfo(
-        version: version,
-        author: author,
-        description: desc,
-        license: license,
-        srcDir: srcDir
-    )
-
 template extractDeps(nimblePath: string) =
     let nimbleFilePath = getNimbleFile(nimblePath)
     for line in staticRead(nimbleFilePath).split("\n"):
@@ -132,15 +131,25 @@ proc getInfo(depPkgName: string) =
     var version, author, desc, license, srcDir: string
     let depPackagePath = find(Dir, getPkgPath(), depPkgName & "*")
     extractDeps(depPackagePath)
-    addNimbleDep(depPkgName, version, author, desc, license, srcDir)
+    Nimble.deps[depPkgName] = Pkg(
+        pkgType: Dependency,
+        version: version,
+        author: author,
+        description: desc,
+        license: license,
+        srcDir: srcDir
+    )
+    for depPkgName in deps:
+        if depPkgName == "pkginfo": continue
+        depPkgName.getInfo()
 
 macro getPkgInfo(nimblePath: static string) =
     var deps: seq[string]
     var version, author, desc, license, srcDir: string
-    Nimble = PkgInfo()
+    Nimble = Pkg()
     extractDeps(nimblePath)
     for depPkgName in deps:
-        if depPkgName == "pkginfo": continue
+        if depPkgName == "pkginfo": continue # TODO a better way to skip the `pkginfo` itself
         depPkgName.getInfo()
     initNimble(version, author, desc, license, srcDir, deps)
 
@@ -169,19 +178,19 @@ proc version*(vers: string): Version =
     if v.len == 5:  versTuple.metadata = v[4]
     result = newVersion(versTuple.major, versTuple.minor, versTuple.patch, versTuple.build, versTuple.metadata)
 
-proc getVersion*(pkgInfo: PkgInfo): Version =
+proc getVersion*(pkgInfo: Pkg): Version =
     if pkgInfo != nil:
         result = parseVersion(pkgInfo.version)
 
-proc getAuthor*(pkgInfo: PkgInfo): string =
+proc getAuthor*(pkgInfo: Pkg): string =
     if pkgInfo != nil:
         result = pkgInfo.author
 
-proc getDescription*(pkgInfo: PkgInfo): string =
+proc getDescription*(pkgInfo: Pkg): string =
     if pkgInfo != nil:
         result = pkgInfo.description
 
-proc getLicense*(pkgInfo: PkgInfo): string =
+proc getLicense*(pkgInfo: Pkg): string =
     if pkgInfo != nil:
         result = pkgInfo.license
 
