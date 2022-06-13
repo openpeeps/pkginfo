@@ -41,6 +41,7 @@ when requires "toktok":
 - [x] Semver support via [Semver lib](https://github.com/euantorano/semver.nim)
 - [ ] Extend support for [Nimble variables](https://github.com/nim-lang/nimble#package)
 - [x] Handle indirect deps
+- [ ] Cache dependency metadata in a `nimble-deps.json`
 - [ ] Add unit tests
 - [ ] Test with bigger projects
 
