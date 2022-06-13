@@ -1,6 +1,6 @@
 <p align="center">
     <img src="https://raw.githubusercontent.com/georgelemon/nimble-website/main/.github/nimble.png" width="70px"><br>
-    A tiny utility package to extract Nimble information from any <code>.nimble</code> file<br>
+    A tiny utility package to extract Nimble information from any <code>.nimble</code> project<br>
 </p>
 
 ## 😍 Key Features

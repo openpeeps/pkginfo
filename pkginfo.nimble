@@ -2,7 +2,7 @@
 
 version       = "0.1.0"
 author        = "George Lemon"
-description   = "A tiny utility package to extract Nimble information"
+description   = "A tiny utility package to extract Nimble information from any project"
 license       = "MIT"
 srcDir        = "src"
 

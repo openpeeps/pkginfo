@@ -1,4 +1,4 @@
-# A tiny utility package to extract Nimble information
+# A tiny utility package to extract Nimble information from any project
 #
 # (c) 2022 Released under MIT License
 #          Made by Humans from OpenPeep
