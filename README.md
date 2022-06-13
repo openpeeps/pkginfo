@@ -17,7 +17,7 @@ nimble install pkginfo
 ```nim
 import pkginfo
 
-when requires "std/json":
+when requires "json":
     import std/marshal
 ```
 
