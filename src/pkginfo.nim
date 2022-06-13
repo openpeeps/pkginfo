@@ -1,3 +1,9 @@
+# A tiny utility package to extract Nimble information
+#
+# (c) 2022 Released under MIT License
+#          Made by Humans from OpenPeep
+#          https://github.com/openpeep/pkginfo
+
 import std/[macros, tables]
 from std/strutils import strip, split, startsWith, Whitespace
 
@@ -20,7 +26,6 @@ type
 var Nimble {.compileTime.}: PkgInfo
 
 macro pkginfo() =
-    # echo staticRead(getProjectPath() & "/")
     var nimbleFile = staticExec("find " & getProjectPath() & "/.. -type f -name *.nimble -print")
     if nimbleFile.len == 0:
         raise newException(PkgInfoDefect, "Could not find a nimble file")
