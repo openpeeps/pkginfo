@@ -41,9 +41,14 @@ template find(ftype: FinderType, path: string, pattern = ""): untyped =
     staticExec("find " & path & " -type " & $ftype & " -maxdepth 1 -name " & pattern & " -print")
 
 template getNimbleFile(nimbleProjectPath: untyped): untyped = 
+    # echo nimbleProjectPath
     var nimbleFile = find(File, nimbleProjectPath, "*.nimble")
     if nimbleFile.len == 0:
-        raise newException(PkgInfoDefect, "Could not find a nimble file")
+        # try look for `nimble-link` packages
+        let nimbleLinkFile = find(File, nimbleProjectPath, "*.nimble-link")
+        if nimbleLinkFile.len == 0:
+            raise newException(PkgInfoDefect, "Could not find a nimble file at\n" & nimbleProjectPath)
+        nimbleFile = staticRead(nimbleLinkFile).split("\n")[0]
     nimbleFile = nimbleFile.strip()
     nimbleFile
 
@@ -74,7 +79,7 @@ template getDep(line: string, chSep = '"'): untyped =
                 startVal = true
                 continue
         if startVal:
-            if ch in {'>', '=', '<'}: # TODO extract version
+            if ch in {'>', '=', '<'}: # TODO extract version https://github.com/nim-lang/nimble#creating-packages
                 startVal = false
                 continue
             add pkgname, ch
@@ -83,7 +88,7 @@ template getDep(line: string, chSep = '"'): untyped =
     (pkgName: pkgname.strip(), pkgVersion: "")
 
 template initNimble(version, author, desc, license, srcDir: string, deps: seq[string]) =
-    Nimble = PkgInfo()
+    # https://github.com/nim-lang/nimble#package
     Nimble.version = version
     Nimble.author = author
     Nimble.description = desc
@@ -91,11 +96,18 @@ template initNimble(version, author, desc, license, srcDir: string, deps: seq[st
     Nimble.srcDir = srcDir
     # Nimble.deps = deps
 
-template addNimbleDep(name: string, pkgInfo: var PkgInfo) =
-    Nimble.deps[name] = pkgInfo
+template addNimbleDep(name, version, author, desc, license, srcDir: string) =
+    Nimble.deps[name] = PkgInfo(
+        version: version,
+        author: author,
+        description: desc,
+        license: license,
+        srcDir: srcDir
+    )
 
-template extractDeps() =
-    for line in staticRead(getNimbleFile(nimblePath)).split("\n"):
+template extractDeps(nimblePath: string) =
+    let nimbleFilePath = getNimbleFile(nimblePath)
+    for line in staticRead(nimbleFilePath).split("\n"):
         if line.startsWith "version":
             version = line.getVal "version"
         elif line.startsWith "author":
@@ -112,22 +124,31 @@ template extractDeps() =
                 deps.add pkgName
         else: continue # ignore anything else
 
-macro pkginfo(nimblePath: static string) =
+proc getInfo(depPkgName: string) =
     var deps: seq[string]
     var version, author, desc, license, srcDir: string
-    extractDeps()
-    initNimble(version, author, desc, license, srcDir, deps)
+    let depPackagePath = find(Dir, getPkgPath(), depPkgName & "*")
+    extractDeps(depPackagePath)
+    addNimbleDep(depPkgName, version, author, desc, license, srcDir)
 
+macro getPkgInfo(nimblePath: static string) =
+    var deps: seq[string]
+    var version, author, desc, license, srcDir: string
+    Nimble = PkgInfo()
+    extractDeps(nimblePath)
     for depPkgName in deps:
-        let depNimblePath = find(Dir, getPkgPath(), depPkgName & "*")
-        echo depNimblePath
+        if depPkgName == "pkginfo": continue
+        depPkgName.getInfo()
+    initNimble(version, author, desc, license, srcDir, deps)
 
 template hasDep*(pkgName: string): untyped =
     Nimble.deps.hasKey(pkgName)
 
 macro requires*(pkgName: string): untyped = 
+    ## Determine if current library has a dependency with given name.
+    ## This macro works for all direct and indirect dependencies.
     result = newStmtList()
     result.add quote do:
         hasDep(`pkgName`)
 
-pkginfo(getProjectPath() & "/..")
+getPkgInfo(getProjectPath() & "/..") # init pkginfo
