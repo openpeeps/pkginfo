@@ -1,15 +1,25 @@
-<p align="center"><img src=".github/logo.png" width="140px"><br>OpenPeep's repository template for developing libraries,<br>projects and other cool things</p>
+<p align="center">
+    <img src="https://raw.githubusercontent.com/georgelemon/nimble-website/main/.github/nimble.png" width="70px"><br>
+    A tiny utility package to extract Nimble information from any <code>.nimble</code> file<br>
+</p>
 
 ## 😍 Key Features
-- [x] Made with Love
-- [x] ...
-- [x] Open Source
+- [x] Meta-programming powered by Nim's Macros 
+- [x] Compile-time & Runtime
+- [x] Open Source under `MIT` License
 
 ## Installing
-_installation description_
+```
+nimble install pkginfo
+```
 
 ## Examples
-_to add working examples_
+```nim
+import pkginfo
+
+when requires "std/json":
+    import std/marshal
+```
 
 ## Roadmap
 _to add roadmap_
@@ -23,7 +33,7 @@ Contribute with code, ideas, bugfixing or you can even [donate via PayPal addres
 <strong>Why Nim?</strong> Performance, fast compilation and C-like freedom. We want to keep code clean, readable, concise, and close to our intention. Also a very good language to learn in 2022.
 
 ### 🎩 License
-{PROJECT_NAME} is an Open Source Software released under `{LICENSE}` license. [Made by Humans from OpenPeep](https://github.com/openpeep).<br>
+Pkginfo is an Open Source Software released under `MIT` license. [Made by Humans from OpenPeep](https://github.com/openpeep).<br>
 Copyright &copy; 2022 OpenPeep & Contributors &mdash; All rights reserved.
 
 <a href="https://hetzner.cloud/?ref=Hm0mYGM9NxZ4"><img src="https://openpeep.ro/banners/openpeep-footer.png" width="100%"></a>
