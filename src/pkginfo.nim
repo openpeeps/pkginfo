@@ -100,7 +100,7 @@ template extractDeps() =
             version = line.getVal "version"
         elif line.startsWith "author":
             author = line.getVal "author"
-        elif line.startsWith "author":
+        elif line.startsWith "description":
             desc = line.getVal "description"
         elif line.startsWith "license":
             license = line.getVal "license"
