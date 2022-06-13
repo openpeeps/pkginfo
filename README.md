@@ -16,6 +16,7 @@ nimble install pkginfo
 ## Examples
 
 Use `requires` macro to determine the current package dependencies and change the way application works.
+
 ```nim
 import pkginfo
 
@@ -29,7 +30,7 @@ Extract the `version` of a package from `.nimble` project for backwards compatib
 import pkginfo
 
 when requires "toktok":
-    when pkg("toktok").getVersion >= version("0.1.1"):
+    when pkg("toktok").getVersion > version("0.1.1"):
         # backwards compatibility support
     else:
         # code for newer versions
@@ -38,7 +39,7 @@ when requires "toktok":
 ## Roadmap
 - [x] Extract deps info
 - [x] Semver support via [Semver lib](https://github.com/euantorano/semver.nim)
-- [ ] Extend support for [Nimble variables](https://github.com/nim-lang/nimble#package)
+- [x] Extend support for [Nimble variables](https://github.com/nim-lang/nimble#package)
 - [ ] Handle indirect deps
 - [ ] Add unit tests
 - [ ] Test with bigger projects
