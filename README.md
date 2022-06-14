@@ -33,10 +33,16 @@ Extract the `version` of a package from `.nimble` project for backwards compatib
 import pkginfo
 
 when requires "toktok":
-    when pkg("toktok").getVersion > version("0.1.1"):
+    when pkg("toktok").getVersion > v("0.1.1"):
         # backwards compatibility support
     else:
         # code for newer versions
+```
+
+Checking for the current Nim version from main `.nimble`
+```nim
+when nimVersion() < v "1.6.4":
+    {.warning: "You are using an older version of Nim".}
 ```
 
 ## Roadmap
