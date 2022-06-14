@@ -36,7 +36,7 @@ type
 
 var Nimble {.compileTime.}: Pkg
 
-proc getInfo(depPkgName: string)
+proc getInfo(depPkgName: string) {.compileTime.}
 
 template getPkgPath(pkgDirName = ""): untyped =
     if pkgDirName.len == 0:
@@ -49,10 +49,12 @@ template ensureNimblePkgsExists(): untyped =
         raise newException(PackageDefect, "Could not find `pkgs` directory")
 
 template find(ftype: FinderType, path: string, pattern = ""): untyped =
+    ## Find either files or directories in ~/.nimble/pkgs
+    ## TODO Windows support using walkDirRec
     staticExec("find " & path & " -type " & $ftype & " -maxdepth 1 -name " & pattern & " -print")
 
 template getNimbleFile(nimbleProjectPath: untyped): untyped = 
-    # echo nimbleProjectPath
+    ## Retrieve nimble file contents using `staticRead`
     var nimbleFile = find(File, nimbleProjectPath, "*.nimble")
     if nimbleFile.len == 0:
         # try look for `nimble-link` packages
@@ -63,7 +65,8 @@ template getNimbleFile(nimbleProjectPath: untyped): untyped =
     nimbleFile = nimbleFile.strip()
     nimbleFile
 
-template getVal(line: string, field = "", chSep = '"'): untyped = 
+template getVal(line: string, field = "", chSep = '"'): untyped =
+    ## Retrieve values from `.nimble` variables
     var startVal: bool
     var val: string
     for ch in line:
@@ -80,6 +83,7 @@ template getVal(line: string, field = "", chSep = '"'): untyped =
     val
 
 template extractDep(line: string, chSep = '"'): untyped =
+    ## Extract package names from dependencies
     var startVal: bool
     var pkgname: string
     for ch in line:
@@ -105,7 +109,6 @@ template initNimble(version, author, desc, license, srcDir: string, deps: seq[st
     Nimble.description = desc
     Nimble.license = license
     Nimble.srcDir = srcDir
-    # Nimble.deps = deps
 
 template extractDeps(nimblePath: string) =
     let nimbleFilePath = getNimbleFile(nimblePath)
@@ -126,7 +129,7 @@ template extractDeps(nimblePath: string) =
                 deps.add pkgName
         else: continue # ignore anything else
 
-proc getInfo(depPkgName: string) =
+proc getInfo(depPkgName: string) {.compileTime.} =
     var deps: seq[string]
     var version, author, desc, license, srcDir: string
     let depPackagePath = find(Dir, getPkgPath(), depPkgName & "*")
@@ -144,6 +147,7 @@ proc getInfo(depPkgName: string) =
         depPkgName.getInfo()
 
 macro getPkgInfo(nimblePath: static string) =
+    ## Retrieve main package information
     var deps: seq[string]
     var version, author, desc, license, srcDir: string
     Nimble = Pkg()
@@ -168,7 +172,7 @@ macro requires*(pkgName: string): untyped =
     result.add quote do:
         hasDep(`pkgName`)
 
-proc version*(vers: string): Version =
+proc version*(vers: string): Version {.compileTime.} =
     var versTuple: tuple[major, minor, patch: int, build, metadata: string]
     let v = vers.split(".")
     versTuple.major = parseInt v[0]
@@ -178,19 +182,19 @@ proc version*(vers: string): Version =
     if v.len == 5:  versTuple.metadata = v[4]
     result = newVersion(versTuple.major, versTuple.minor, versTuple.patch, versTuple.build, versTuple.metadata)
 
-proc getVersion*(pkgInfo: Pkg): Version =
+proc getVersion*(pkgInfo: Pkg): Version {.compileTime.} =
     if pkgInfo != nil:
         result = parseVersion(pkgInfo.version)
 
-proc getAuthor*(pkgInfo: Pkg): string =
+proc getAuthor*(pkgInfo: Pkg): string {.compileTime.} =
     if pkgInfo != nil:
         result = pkgInfo.author
 
-proc getDescription*(pkgInfo: Pkg): string =
+proc getDescription*(pkgInfo: Pkg): string {.compileTime.} =
     if pkgInfo != nil:
         result = pkgInfo.description
 
-proc getLicense*(pkgInfo: Pkg): string =
+proc getLicense*(pkgInfo: Pkg): string {.compileTime.} =
     if pkgInfo != nil:
         result = pkgInfo.license
 
