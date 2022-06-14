@@ -1,12 +1,15 @@
 <p align="center">
     <img src="https://raw.githubusercontent.com/georgelemon/nimble-website/main/.github/nimble.png" width="70px"><br>
-    A tiny utility package to extract Nimble information from any <code>.nimble</code> project<br>
+    📦 A tiny utility package to extract Nimble information from any <code>.nimble</code> project<br>
 </p>
 
 ## 😍 Key Features
-- [x] Meta-programming powered by Nim's Macros 
-- [x] Compile-time & Runtime
-- [x] Open Source under `MIT` License
+- [x] Extending features by dependencies 🎉
+- [x] Enable Backwards Compatibility
+- [x] Magically `when requires "pkg_name"`
+- [x] Extract all package dependencies (`direct` + `indirect`)
+- [x] Meta-programming powered by Nim's Macros 👑
+- [x] Open Source | `MIT` License
 
 ## Installing
 ```
