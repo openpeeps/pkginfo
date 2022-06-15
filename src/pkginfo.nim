@@ -8,7 +8,8 @@ import semver
 import std/[macros, tables]
 
 from std/os import parentDir, getHomeDir, dirExists
-from std/strutils import Whitespace, Digits, strip, split, join, startsWith, parseInt
+from std/strutils import Whitespace, Digits, strip, split, join,
+                        startsWith, endsWith, parseInt
 
 export semver
 
@@ -51,16 +52,23 @@ template find(ftype: FinderType, path: string, pattern = ""): untyped =
     ## TODO Windows support using walkDirRec
     staticExec("find " & path & " -type " & $ftype & " -maxdepth 1 -name " & pattern & " -print")
 
+template getNimbleLink(nimbleProjectPath: untyped): untyped =
+    var nimbleLinkFile = find(File, nimbleProjectPath, "*.nimble-link")
+    if nimbleLinkFile.len == 0:
+        raise newException(PackageDefect, "Could not find a nimble file at\n" & nimbleProjectPath)
+    staticRead(nimbleLinkFile).split("\n")[0]
+
 template getNimbleFile(nimbleProjectPath: untyped): untyped = 
     ## Retrieve nimble file contents using `staticRead`
     var nimbleFile = find(File, nimbleProjectPath, "*.nimble")
-    if nimbleFile.len == 0:
+    if nimbleFile.len != 0:
+        nimbleFile = nimbleFile.split("\n")[0]
+        if not nimbleFile.endsWith(".nimble"):
+            # try look for `nimble-link` packages
+            nimbleFile = getNimbleLink(nimbleFile)
+    elif nimbleFile.len == 0:
         # try look for `nimble-link` packages
-        let nimbleLinkFile = find(File, nimbleProjectPath, "*.nimble-link")
-        if nimbleLinkFile.len == 0:
-            raise newException(PackageDefect, "Could not find a nimble file at\n" & nimbleProjectPath)
-        nimbleFile = staticRead(nimbleLinkFile).split("\n")[0]
-    nimbleFile = nimbleFile.strip()
+        nimbleFile = getNimbleLink(nimbleProjectPath)
     nimbleFile
 
 template getVal(line: string, field = "", chSep = '"'): untyped =
