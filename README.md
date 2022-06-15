@@ -8,6 +8,7 @@
 - [x] Enable Backwards Compatibility
 - [x] Magically `when requires "pkg_name"`
 - [x] Extract all package dependencies (`direct` + `indirect`)
+- [x] Cache package information in `pkginfo.json`
 - [x] Meta-programming powered by Nim's Macros 👑
 - [x] Open Source | `MIT` License
 
@@ -50,7 +51,7 @@ when nimVersion() < v "1.6.4":
 - [x] Semver support via [Semver lib](https://github.com/euantorano/semver.nim)
 - [ ] Extend support for [Nimble variables](https://github.com/nim-lang/nimble#package)
 - [x] Handle indirect deps
-- [ ] Cache dependency metadata in a `nimble-deps.json`
+- [x] Cache dependency metadata in a `pkginfo.json`
 - [ ] Add unit tests
 - [ ] Test with bigger projects
 
