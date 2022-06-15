@@ -10,7 +10,7 @@ import std/[macros, tables, json, jsonutils]
 from std/os import parentDir, getHomeDir, dirExists, normalizedPath,
                    fileExists, walkDir, splitPath, PathComponent
 from std/strutils import Whitespace, Digits, strip, split, join,
-                        startsWith, endsWith, parseInt
+                        startsWith, endsWith, parseInt, contains
 
 export semver
 
@@ -121,6 +121,7 @@ template extractDep(line: string, chSep = '"'): untyped =
     var startVal: bool
     var pkgName: string
     var pkgVers: seq[char]
+    var hasTagVers: bool
     for ch in line:
         if ch == chSep:
             if startVal == true:
@@ -132,12 +133,17 @@ template extractDep(line: string, chSep = '"'): untyped =
             if ch in {'>', '=', '<', '.'}: 
                 # https://github.com/nim-lang/nimble#creating-packages
                 continue
+            elif ch == '#':
+                pkgVers.add '#'
+                hasTagVers = true
+            elif hasTagVers:
+                pkgVers.add ch
             elif ch in Digits:
-                pkgVers.add(ch)
+                pkgVers.add ch
             else: add pkgName, ch
         elif ch in Whitespace:
             continue
-    var pkgVersion = pkgVers.join(".")
+    var pkgVersion = if hasTagVers: pkgVers.join() else: pkgVers.join(".")
     (pkgName: pkgName.strip(), pkgVersion: pkgVersion)
 
 template initNimble(version, author, desc, license, srcDir, nimVersion: string) =
@@ -206,7 +212,8 @@ proc getInfo(depPkgName: string) {.compileTime.} =
     )
     for depPkgName in deps:
         if depPkgName in ["nim", "pkginfo"]: continue
-        depPkgName.getInfo()
+        if not Nimble.deps.hasKey depPkgName:
+            depPkgName.getInfo()
 
 proc getInfo(depPkgName: string, obj: JsonNode) {.compileTime.} =
     ## Get package information from current `pkginfo.json`
@@ -260,7 +267,8 @@ macro getPkgInfo(nimblePath: static string) =
         extractDeps(projectPath, true)
         for depPkgName in deps:
             if depPkgName in ["nim", "pkginfo"]: continue # TODO a better way to skip the `pkginfo` itself
-            depPkgName.getInfo()
+            if not Nimble.deps.hasKey depPkgName:
+                depPkgName.getInfo()
         initNimble(version, author, desc, license, srcDir, nimVersion)
         writeFile(pkginfoPath, $toJson(Nimble)) # store pkg info in pkginfo.json
 
