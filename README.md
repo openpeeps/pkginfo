@@ -8,7 +8,7 @@
 - [x] Enable Backwards Compatibility support
 - [x] Magically `when requires "pkg_name"`
 - [x] Extract all package dependencies (`direct` + `indirect`)
-- [x] Cache package information in `pkginfo.json`
+- [x] Cache metadata in `pkginfo.json` in Current Working Project
 - [x] Meta-programming powered by Nim's Macros 👑
 - [x] Open Source | `MIT` License
 
