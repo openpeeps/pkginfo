@@ -4,8 +4,8 @@
 </p>
 
 ## 😍 Key Features
-- [x] Extending features by dependencies 🎉
-- [x] Enable Backwards Compatibility
+- [x] Enable features by a specific dependency 🎉
+- [x] Enable Backwards Compatibility support
 - [x] Magically `when requires "pkg_name"`
 - [x] Extract all package dependencies (`direct` + `indirect`)
 - [x] Cache package information in `pkginfo.json`
