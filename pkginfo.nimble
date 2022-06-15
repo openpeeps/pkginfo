@@ -11,3 +11,6 @@ srcDir        = "src"
 
 requires "nim >= 1.6.4"
 requires "semver >= 1.1.1"
+
+task tests, "Run tests":
+    exec "testament p 'tests/*.nim'"
