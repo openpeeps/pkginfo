@@ -61,7 +61,7 @@ when nimVersion() < v "1.6.4":
 - [ ] Extend support for [Nimble variables](https://github.com/nim-lang/nimble#package)
 - [x] Handle indirect deps
 - [x] Cache dependency metadata in a `pkginfo.json`
-- [ ] Add unit tests
+- [x] Add unit tests
 - [ ] Test with bigger projects
 
 ### ❤ Contributions

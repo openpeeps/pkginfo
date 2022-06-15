@@ -10,4 +10,4 @@ srcDir        = "src"
 # Dependencies
 
 requires "nim >= 1.6.4"
-requires "semver"
+requires "semver >= 1.1.1"

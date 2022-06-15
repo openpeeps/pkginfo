@@ -7,7 +7,8 @@
 import semver
 import std/[macros, tables, json, jsonutils]
 
-from std/os import parentDir, getHomeDir, dirExists, normalizedPath, fileExists
+from std/os import parentDir, getHomeDir, dirExists, normalizedPath,
+                   fileExists, walkDir, splitPath, PathComponent
 from std/strutils import Whitespace, Digits, strip, split, join,
                         startsWith, endsWith, parseInt
 
@@ -39,6 +40,7 @@ proc getInfo(depPkgName: string) {.compileTime.}
 proc getInfo(depPkgName: string, obj: JsonNode) {.compileTime.}
 
 template getPkgPath(pkgDirName = ""): untyped =
+    ## TODO first, find where is Nimble installed using `which nimble`
     if pkgDirName.len == 0:
         getHomeDir() & ".nimble/pkgs"
     else:
@@ -48,20 +50,45 @@ template ensureNimblePkgsExists(): untyped =
     if not dirExists(getPkgPath()):
         raise newException(PackageDefect, "Could not find `pkgs` directory")
 
-template find(ftype: FinderType, path: string, pattern = ""): untyped =
+template find(ftype: FinderType, dirpath: string, pattern = ""): untyped =
     ## Find either files or directories in ~/.nimble/pkgs
-    ## TODO Windows support using walkDirRec
-    staticExec("find " & path & " -type " & $ftype & " -maxdepth 1 -name " & pattern & " -print")
+    var dirOrFilePath: string
+    case ftype:
+    of Dir:
+        for dir in walkDir(dirpath):
+            if dir.kind == PathComponent.pcDir:
+                let pkgdir = splitPath(dir.path)
+                if startsWith(pkgdir.tail, pattern):
+                    if endsWith(pkgdir.tail, "-#head"):
+                        dirOrFilePath = dir.path
+                        break
+                    else:
+                        if dirOrFilePath.len == 0:
+                            dirOrFilePath = dir.path
+                            break
+                        else: continue
+            else: continue
+    of File:
+        for file in walkDir(dirpath):
+            if file.kind == PathComponent.pcFile:
+                let pkgfile = splitPath(file.path)
+                if endsWith(pkgfile.tail, pattern):
+                    dirOrFilePath = file.path
+                    break
+                else: continue
+            else: continue
+    dirOrFilePath
+    # staticExec("find " & dirpath & " -type " & $ftype & " -maxdepth 1 -name " & pattern & " -print")
 
 template getNimbleLink(nimbleProjectPath: untyped): untyped =
-    var nimbleLinkFile = find(File, nimbleProjectPath, "*.nimble-link")
+    var nimbleLinkFile = find(File, nimbleProjectPath, ".nimble-link")
     if nimbleLinkFile.len == 0:
         raise newException(PackageDefect, "Could not find a nimble file at\n" & nimbleProjectPath)
     staticRead(nimbleLinkFile).split("\n")[0]
 
 template getNimbleFile(nimbleProjectPath: untyped): untyped = 
     ## Retrieve nimble file contents using `staticRead`
-    var nimbleFile = find(File, nimbleProjectPath, "*.nimble")
+    var nimbleFile = find(File, nimbleProjectPath, ".nimble")
     if nimbleFile.len != 0:
         nimbleFile = nimbleFile.split("\n")[0]
         if not nimbleFile.endsWith(".nimble"):
@@ -113,13 +140,14 @@ template extractDep(line: string, chSep = '"'): untyped =
     var pkgVersion = pkgVers.join(".")
     (pkgName: pkgName.strip(), pkgVersion: pkgVersion)
 
-template initNimble(version, author, desc, license, srcDir: string) =
+template initNimble(version, author, desc, license, srcDir, nimVersion: string) =
     # https://github.com/nim-lang/nimble#package
     Nimble.version = version
     Nimble.author = author
     Nimble.description = desc
     Nimble.license = license
     Nimble.srcDir = srcDir
+    Nimble.nimVersion = nimVersion
 
 template extractDeps(nimblePath: string, isMain = false) =
     let nimbleFilePath = getNimbleFile(nimblePath)
@@ -167,7 +195,7 @@ proc getInfo(depPkgName: string) {.compileTime.} =
     ## Get package information from `.nimble` file
     var deps: seq[string]
     var version, author, desc, license, srcDir: string
-    let depPackagePath = find(Dir, getPkgPath(), depPkgName & "*")
+    let depPackagePath = find(Dir, getPkgPath(), depPkgName)
     extractDeps(depPackagePath)
     Nimble.deps[depPkgName] = Pkg(
         pkgType: Dependency,
@@ -226,14 +254,14 @@ macro getPkgInfo(nimblePath: static string) =
         let pkgInfoObj = parseJson(staticRead(pkginfoPath))
         for key, val in pairs(pkgInfoObj):
             extractStatic(key, val)
-        initNimble(version, author, desc, license, srcDir)
+        initNimble(version, author, desc, license, srcDir, nimVersion)
     else:    
         var deps: seq[string]
         extractDeps(projectPath, true)
         for depPkgName in deps:
             if depPkgName in ["nim", "pkginfo"]: continue # TODO a better way to skip the `pkginfo` itself
             depPkgName.getInfo()
-        initNimble(version, author, desc, license, srcDir)
+        initNimble(version, author, desc, license, srcDir, nimVersion)
         writeFile(pkginfoPath, $toJson(Nimble)) # store pkg info in pkginfo.json
 
 template hasDep*(pkgName: string): untyped =
