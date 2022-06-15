@@ -9,7 +9,7 @@ import std/[macros, tables, json, jsonutils]
 
 from std/os import parentDir, getHomeDir, dirExists, normalizedPath, fileExists
 from std/strutils import Whitespace, Digits, strip, split, join,
-                        startsWith, endsWith, parseInt, parseEnum
+                        startsWith, endsWith, parseInt
 
 export semver
 
