@@ -19,6 +19,15 @@ nimble install pkginfo
 
 ## Examples
 
+Get nimble meta data from current working project
+```nim
+import pkginfo
+
+static:
+    echo pkg().getVersion
+    echo pkg().getDescription
+```
+
 Use `requires` macro to determine the current package dependencies and change the way application works.
 
 ```nim

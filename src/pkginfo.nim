@@ -288,12 +288,16 @@ proc nimVersion*(): Version {.compileTime.} =
     ## Get a package Nim version from `.nimble`
     result = parseVersion(Nimble.nimVersion)
 
-macro pkg*(pkgName): untyped =
+macro pkg*(pkgName: static string = ""): untyped =
     result = newStmtList()
-    result.add quote do:
-        let pkg = getDep(`pkgName`)
-        if pkg != nil:
-            pkg
-        else: nil
+    if pkgName.len == 0:
+        result.add quote do:
+            Nimble
+    else:
+        result.add quote do:
+            let pkg = getDep(`pkgName`)
+            if pkg != nil:
+                pkg
+            else: nil
 
 getPkgInfo(getProjectPath() & "/..") # init pkginfo
