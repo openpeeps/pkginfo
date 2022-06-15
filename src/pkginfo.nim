@@ -240,14 +240,15 @@ macro getPkgInfo(nimblePath: static string) =
         when defined macosx:
             nimbleLastModified = staticExec("stat -f %m " & nimbleFilePath)
             pkgInfoLastModified = staticExec("stat -f %m " & pkginfoPath)
+            if parseInt(pkgInfoLastModified) > parseInt(nimbleLastModified):
+                hasStaticPkgInfo = true
         elif defined windows:
             ## TODO
         else:
-            nimbleLastModified = staticExec("stat -c %y " & nimbleFilePath)
-            pkgInfoLastModified = staticExec("stat -c %y " & pkginfoPath)
-
-        if parseInt(pkgInfoLastModified) > parseInt(nimbleLastModified):
-            hasStaticPkgInfo = true
+            nimbleLastModified = staticExec("stat --format %.Y " & nimbleFilePath)
+            pkgInfoLastModified = staticExec("stat --format %.Y " & pkginfoPath)
+            if parseInt(pkgInfoLastModified) > parseInt(nimbleLastModified):
+                hasStaticPkgInfo = true
 
     if hasStaticPkgInfo:
         let pkgInfoObj = parseJson(staticRead(pkginfoPath))
