@@ -5,11 +5,11 @@
 #          https://github.com/openpeep/pkginfo
 
 import semver
-import std/[macros, tables]
+import std/[macros, tables, json, jsonutils]
 
-from std/os import parentDir, getHomeDir, dirExists
+from std/os import parentDir, getHomeDir, dirExists, normalizedPath, fileExists
 from std/strutils import Whitespace, Digits, strip, split, join,
-                        startsWith, endsWith, parseInt
+                        startsWith, endsWith, parseInt, parseEnum
 
 export semver
 
@@ -35,7 +35,8 @@ type
 
 var Nimble {.compileTime.}: Pkg
 
-proc getInfo(depPkgName: string, isMain = false) {.compileTime.}
+proc getInfo(depPkgName: string) {.compileTime.}
+proc getInfo(depPkgName: string, obj: JsonNode) {.compileTime.}
 
 template getPkgPath(pkgDirName = ""): untyped =
     if pkgDirName.len == 0:
@@ -112,7 +113,7 @@ template extractDep(line: string, chSep = '"'): untyped =
     var pkgVersion = pkgVers.join(".")
     (pkgName: pkgName.strip(), pkgVersion: pkgVersion)
 
-template initNimble(version, author, desc, license, srcDir: string, deps: seq[string]) =
+template initNimble(version, author, desc, license, srcDir: string) =
     # https://github.com/nim-lang/nimble#package
     Nimble.version = version
     Nimble.author = author
@@ -137,13 +138,35 @@ template extractDeps(nimblePath: string, isMain = false) =
             let (pkgName, pkgVersion) = line.extractDep()
             if pkgName == "nim":
                 if isMain:
-                    nimVersion = pkgVersion
+                    Nimble.nimVersion = pkgVersion
             else: deps.add pkgName
         else: continue # ignore anything else
 
-proc getInfo(depPkgName: string, isMain = false) {.compileTime.} =
+template extractStatic(key: string, val: JsonNode) =
+    ## Extract Nimble information from static `pkginfo.json` file
+    if key == "version":
+        version = val.getStr
+    elif key == "author":
+        author = val.getStr
+    elif key == "description":
+        desc = val.getStr
+    elif key == "license":
+        license = val.getStr
+    elif key == "srcDir":
+        srcDir = val.getStr
+    elif key == "pkgType":
+        if val.getInt == 0: pkgType = Main
+        else:               pkgType = Dependency
+    elif key == "nimVersion":
+        nimVersion = val.getStr
+    elif key == "deps":
+        for pkgName, pkgInfo in pairs(val):
+            getInfo(pkgName, pkgInfo)
+
+proc getInfo(depPkgName: string) {.compileTime.} =
+    ## Get package information from `.nimble` file
     var deps: seq[string]
-    var nimVersion, version, author, desc, license, srcDir: string
+    var version, author, desc, license, srcDir: string
     let depPackagePath = find(Dir, getPkgPath(), depPkgName & "*")
     extractDeps(depPackagePath)
     Nimble.deps[depPkgName] = Pkg(
@@ -158,22 +181,52 @@ proc getInfo(depPkgName: string, isMain = false) {.compileTime.} =
         if depPkgName in ["nim", "pkginfo"]: continue
         depPkgName.getInfo()
 
+proc getInfo(depPkgName: string, obj: JsonNode) {.compileTime.} =
+    ## Get package information from current `pkginfo.json`
+    Nimble.deps[depPkgName] = Pkg(pkgType: Dependency)
+    for key, val in pairs(obj):
+        if key == "version":
+            Nimble.deps[depPkgName].version = val.getStr
+        elif key == "author":
+            Nimble.deps[depPkgName].author = val.getStr
+        elif key == "description":
+            Nimble.deps[depPkgName].description = val.getStr
+        elif key == "license":
+            Nimble.deps[depPkgName].license = val.getStr
+        elif key == "srcDir":
+            Nimble.deps[depPkgName].srcDir = val.getStr
+        elif key == "pkgType":
+            Nimble.deps[depPkgName].pkgType = Dependency
+
 macro getPkgInfo(nimblePath: static string) =
     ## Retrieve main package information
-    var deps: seq[string]
+    var hasStaticPkgInfo: bool
+    var projectPath = nimblePath.normalizedPath()
+    let pkginfoPath = projectPath & "/pkginfo.json"
+    Nimble = Pkg(pkgType: Main)
     var nimVersion, version, author, desc, license, srcDir: string
-    Nimble = Pkg()
-    extractDeps(nimblePath, true)
-    Nimble.nimVersion = nimVersion
-    for depPkgName in deps:
-        if depPkgName in ["nim", "pkginfo"]: continue # TODO a better way to skip the `pkginfo` itself
-        depPkgName.getInfo(isMain = true)
-    initNimble(version, author, desc, license, srcDir, deps)
+    var pkgType: PkgType
+    if fileExists(pkginfoPath):
+        hasStaticPkgInfo = true
+        let pkgInfoObj = parseJson(staticRead(pkginfoPath))
+        for key, val in pairs(pkgInfoObj):
+            extractStatic(key, val)
+        initNimble(version, author, desc, license, srcDir)
+    else:    
+        var deps: seq[string]
+        extractDeps(projectPath, true)
+        for depPkgName in deps:
+            if depPkgName in ["nim", "pkginfo"]: continue # TODO a better way to skip the `pkginfo` itself
+            depPkgName.getInfo()
+        initNimble(version, author, desc, license, srcDir)
+        writeFile(pkginfoPath, $toJson(Nimble)) # store pkg info in pkginfo.json
 
 template hasDep*(pkgName: string): untyped =
+    ## Determine if current project requires a package by name
     Nimble.deps.hasKey(pkgName)
 
 template getDep*(pkgName: string): untyped =
+    ## Retrieve a dependency from current deps
     if Nimble.deps.hasKey(pkgName):
         Nimble.deps[pkgName]
     else: nil
