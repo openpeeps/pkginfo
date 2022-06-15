@@ -5,7 +5,7 @@
 #          https://github.com/openpeep/pkginfo
 
 import semver
-import std/[macros, tables, json, jsonutils]
+import std/[macros, tables, json, jsonutils, posix]
 
 from std/os import parentDir, getHomeDir, dirExists, normalizedPath, fileExists
 from std/strutils import Whitespace, Digits, strip, split, join,
@@ -206,8 +206,23 @@ macro getPkgInfo(nimblePath: static string) =
     Nimble = Pkg(pkgType: Main)
     var nimVersion, version, author, desc, license, srcDir: string
     var pkgType: PkgType
+
     if fileExists(pkginfoPath):
-        hasStaticPkgInfo = true
+        let nimbleFilePath = getNimbleFile(projectPath)
+        var nimbleLastModified, pkgInfoLastModified: string
+        when defined macosx:
+            nimbleLastModified = staticExec("stat -f %m " & nimbleFilePath)
+            pkgInfoLastModified = staticExec("stat -f %m " & pkginfoPath)
+        elif defined windows:
+            ## TODO
+        else:
+            nimbleLastModified = staticExec("stat -c %y " & nimbleFilePath)
+            pkgInfoLastModified = staticExec("stat -c %y " & pkginfoPath)
+
+        if parseInt(pkgInfoLastModified) > parseInt(nimbleLastModified):
+            hasStaticPkgInfo = true
+
+    if hasStaticPkgInfo:
         let pkgInfoObj = parseJson(staticRead(pkginfoPath))
         for key, val in pairs(pkgInfoObj):
             extractStatic(key, val)
