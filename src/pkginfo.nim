@@ -241,6 +241,3 @@ macro pkg*(pkgName: static string = ""): untyped =
             else: nil
 
 getPackageInformation(getProjectPath() & "/..") # init pkginfo
-
-static:
-    echo pretty(toJson(Package), 2)
