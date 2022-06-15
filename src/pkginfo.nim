@@ -28,7 +28,7 @@ type
         srcDir, binDir: string
         case pkgType: PkgType:
         of Main:
-            nimVersion: string
+            nim_version: string
             deps: Table[string, Pkg]
         else: discard
 
@@ -147,7 +147,7 @@ template initNimble(version, author, desc, license, srcDir, nimVersion: string) 
     Nimble.description = desc
     Nimble.license = license
     Nimble.srcDir = srcDir
-    Nimble.nimVersion = nimVersion
+    Nimble.nim_version = nimVersion
 
 template extractDeps(nimblePath: string, isMain = false) =
     let nimbleFilePath = getNimbleFile(nimblePath)
@@ -165,8 +165,7 @@ template extractDeps(nimblePath: string, isMain = false) =
         elif line.startsWith "requires":
             let (pkgName, pkgVersion) = line.extractDep()
             if pkgName == "nim":
-                if isMain:
-                    Nimble.nimVersion = pkgVersion
+                if isMain: nimVersion = pkgVersion
             else: deps.add pkgName
         else: continue # ignore anything else
 
@@ -185,7 +184,7 @@ template extractStatic(key: string, val: JsonNode) =
     elif key == "pkgType":
         if val.getInt == 0: pkgType = Main
         else:               pkgType = Dependency
-    elif key == "nimVersion":
+    elif key == "nim_version":
         nimVersion = val.getStr
     elif key == "deps":
         for pkgName, pkgInfo in pairs(val):
@@ -194,7 +193,7 @@ template extractStatic(key: string, val: JsonNode) =
 proc getInfo(depPkgName: string) {.compileTime.} =
     ## Get package information from `.nimble` file
     var deps: seq[string]
-    var version, author, desc, license, srcDir: string
+    var nimVersion, version, author, desc, license, srcDir: string
     let depPackagePath = find(Dir, getPkgPath(), depPkgName)
     extractDeps(depPackagePath)
     Nimble.deps[depPkgName] = Pkg(
@@ -314,7 +313,7 @@ proc getLicense*(pkgInfo: Pkg): string {.compileTime.} =
 
 proc nimVersion*(): Version {.compileTime.} =
     ## Get a package Nim version from `.nimble`
-    result = parseVersion(Nimble.nimVersion)
+    result = parseVersion(Nimble.nim_version)
 
 macro pkg*(pkgName: static string = ""): untyped =
     result = newStmtList()
