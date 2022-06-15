@@ -245,8 +245,8 @@ macro getPkgInfo(nimblePath: static string) =
         elif defined windows:
             ## TODO
         else:
-            nimbleLastModified = staticExec("stat --format %.Y " & nimbleFilePath)
-            pkgInfoLastModified = staticExec("stat --format %.Y " & pkginfoPath)
+            nimbleLastModified = staticExec("stat --format %Y " & nimbleFilePath)
+            pkgInfoLastModified = staticExec("stat --format %Y " & pkginfoPath)
             if parseInt(pkgInfoLastModified) > parseInt(nimbleLastModified):
                 hasStaticPkgInfo = true
 
