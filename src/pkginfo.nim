@@ -166,12 +166,12 @@ macro getPackageInformation(path: static string) =
         elif k == "license":
             Package.license = v.getStr
         elif k in ["requires", "dependencies"]:
-            if hasStaticPkgInfo:
-                if v.hasKey("nim"):
-                    Package.nim = v["nim"].getStr
-            else:
+            if not hasStaticPkgInfo:
                 Package.nim = v[0]["ver"]["ver"].getStr
             get(v, hasStaticPkgInfo)
+
+    if hasStaticPkgInfo:
+        Package.nim = mainNimble["nim"].getStr
 
     if not hasStaticPkgInfo:
         writeFile(pkginfoPath, $toJson(Package)) # store pkg info in pkginfo.json
