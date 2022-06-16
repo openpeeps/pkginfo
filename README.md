@@ -63,6 +63,8 @@ when nimVersion() < v "1.6.4":
 - [x] Cache dependency metadata in a `pkginfo.json`
 - [x] Add unit tests
 - [ ] Test with bigger projects
+- [x] Extract pkg info with `nimble dump <pkg> --json`
+- [ ] Handle local packages (linked with `nimble-link`)
 
 ### ❤ Contributions
 Contribute with code, ideas, bugfixing or you can even [donate via PayPal address](https://www.paypal.com/donate/?hosted_button_id=RJK3ZTDWPL55C) 🥰

@@ -225,7 +225,7 @@ proc getLicense*(pkgInfo: Pkg): string {.compileTime.} =
         result = pkgInfo.license
 
 proc nimVersion*(): Version {.compileTime.} =
-    ## Get a package Nim version from `.nimble`
+    ## Get Nim version from main working project
     result = parseVersion(Package.nim)
 
 macro pkg*(pkgName: static string = ""): untyped =
