@@ -207,22 +207,27 @@ proc version*(vers: string): Version {.compileTime.} =
     result = newVersion(versTuple.major, versTuple.minor, versTuple.patch, versTuple.build, versTuple.metadata)
 
 proc getVersion*(pkgInfo: Pkg): Version {.compileTime.} =
-    ## Get a package `version` from `.nimble`
+    ## Get package `version`
     if pkgInfo != nil:
         result = parseVersion(pkgInfo.version)
 
+proc getName*(pkgInfo: Pkg): string {.compileTime.} =
+    ## Get package `name`
+    if pkgInfo != nil:
+        result = pkgInfo.name
+
 proc getAuthor*(pkgInfo: Pkg): string {.compileTime.} =
-    ## Get a package `author` name from `.nimble`
+    ## Get package `author`
     if pkgInfo != nil:
         result = pkgInfo.author
 
 proc getDescription*(pkgInfo: Pkg): string {.compileTime.} =
-    ## Get a package `description` from `.nimble`
+    ## Get package `description`
     if pkgInfo != nil:
         result = pkgInfo.desc
 
 proc getLicense*(pkgInfo: Pkg): string {.compileTime.} =
-    ## Get a package license from `.nimble`
+    ## Get package `license`
     if pkgInfo != nil:
         result = pkgInfo.license
 
