@@ -161,6 +161,8 @@ macro getPackageInformation(path: static string) =
             Package.name = v.getStr
         elif k == "version":
             Package.version = v.getStr
+        elif k == "author":
+            Package.author = v.getStr
         elif k == "desc":
             Package.desc = v.getStr
         elif k == "license":
@@ -227,6 +229,21 @@ proc getLicense*(pkgInfo: Pkg): string {.compileTime.} =
 proc nimVersion*(): Version {.compileTime.} =
     ## Get Nim version from main working project
     result = parseVersion(Package.nim)
+
+proc dumpProject*(): Pkg {.compileTime.} =
+    result = Pkg(pkgType: Main)
+    let localNimble = parseJson(staticExec("nimble dump " & getProjectPath() & "/.." & " --json" ))
+    for k, v in pairs(localNimble):
+        if k == "name":
+            result.name = v.getStr
+        elif k == "author":
+            result.author = v.getStr
+        elif k == "version":
+            result.version = v.getStr
+        elif k == "desc":
+            result.desc = v.getStr
+        elif k == "license":
+            result.license = v.getStr
 
 macro pkg*(pkgName: static string = ""): untyped =
     result = newStmtList()
