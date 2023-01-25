@@ -1,0 +1,14 @@
+PackageDefect	index.html#PackageDefect	pkginfo: PackageDefect	
+Package	index.html#Package	pkginfo: Package	
+hasDep	index.html#hasDep.t,string	pkginfo: hasDep(pkgName: string): untyped	
+getDep	index.html#getDep.t,string	pkginfo: getDep(pkgName: string): untyped	
+requires	index.html#requires.m,string	pkginfo: requires(pkgName: string): untyped	
+version	index.html#version,string	pkginfo: version(vers: string): Version	
+getVersion	index.html#getVersion,Pkg	pkginfo: getVersion(pkgInfo: Pkg): Version	
+getName	index.html#getName,Pkg	pkginfo: getName(pkgInfo: Pkg): string	
+getAuthor	index.html#getAuthor,Pkg	pkginfo: getAuthor(pkgInfo: Pkg): string	
+getDescription	index.html#getDescription,Pkg	pkginfo: getDescription(pkgInfo: Pkg): string	
+getLicense	index.html#getLicense,Pkg	pkginfo: getLicense(pkgInfo: Pkg): string	
+nimVersion	index.html#nimVersion	pkginfo: nimVersion(): Version	
+dumpProject	index.html#dumpProject	pkginfo: dumpProject(): Pkg	
+pkg	index.html#pkg,string	pkginfo: pkg(pkgName: string = &quot;&quot;): Pkg	
