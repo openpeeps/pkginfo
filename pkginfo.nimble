@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.2"
 author        = "George Lemon"
 description   = "A tiny utility package to extract Nimble information from any project"
 license       = "MIT"
