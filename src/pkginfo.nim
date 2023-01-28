@@ -5,13 +5,7 @@
 #          https://github.com/openpeep/pkginfo
 
 import semver
-import std/[macros, tables, json, jsonutils]
-
-from std/os import parentDir, getHomeDir, dirExists, normalizedPath,
-           fileExists, walkDir, splitPath, PathComponent
-from std/strutils import Whitespace, Digits, strip, split, join,
-            startsWith, endsWith, parseInt, contains
-
+import std/[os, macros, tables, json, jsonutils, strutils]
 export semver
 
 type
@@ -132,8 +126,10 @@ macro getPackageInformation(path: static string) =
   var hasStaticPkgInfo: bool
   var mainNimble: JsonNode
   var projectPath = path.normalizedPath()
-  let pkginfoPath = projectPath & "/pkginfo.json"
-
+  let pkgCache = projectPath / ".cache"
+  let pkginfoPath = pkgCache / "pkginfo.json"
+  if not dirExists(pkginfoPath):
+    discard staticExec("mkdir" & indent(pkgCache, 1))
   if fileExists(pkginfoPath):
     let nimbleFilePath = getNimbleFile(projectPath)
     var nimbleLastModified, pkgInfoLastModified: string
@@ -237,7 +233,8 @@ proc nimVersion*(): Version {.compileTime.} =
 
 proc dumpProject*(): Pkg {.compileTime.} =
   result = Pkg(pkgType: Main)
-  let localNimble = parseJson(staticExec("nimble dump " & getProjectPath() & "/.." & " --json" ))
+  let localNimble = parseJson(staticExec("nimble dump" & indent(getProjectPath() /../ "", 1) & " --json" ))
+  echo localNimble
   for k, v in pairs(localNimble):
     if k == "name":
       result.name = v.getStr
@@ -256,4 +253,4 @@ proc pkg*(pkgName: string = ""): Pkg {.compileTime.} =
   else:
     getDep(pkgName)
 
-getPackageInformation(getProjectPath() & "/..") # init pkginfo
+getPackageInformation(getProjectPath() /../ "") # init pkginfo
