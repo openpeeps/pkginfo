@@ -128,7 +128,7 @@ macro getPackageInformation(path: static string) =
   var projectPath = path.normalizedPath()
   let pkgCache = projectPath / ".cache"
   let pkginfoPath = pkgCache / "pkginfo.json"
-  if not dirExists(pkginfoPath):
+  if not dirExists(pkgCache): # create .cache dir
     discard staticExec("mkdir" & indent(pkgCache, 1))
   if fileExists(pkginfoPath):
     let nimbleFilePath = getNimbleFile(projectPath)
