@@ -103,7 +103,8 @@ template parsePkg(dep: JsonNode, hasStaticPkgInfo: bool) =
     elif pkgName in ["nim", "pkginfo"]: continue
     let pkgNimbleContents = staticExec("nimble dump " & pkgName & " --json" )
     nimblePkg = parseJson(pkgNimbleContents)
-  else: nimblePkg = dep
+  else:
+    nimblePkg = dep
   Package.dependencies[pkgName] = Pkg(pkgType: Dep)
   Package.dependencies[pkgName].name = nimblePkg["name"].getStr
   Package.dependencies[pkgName].version = nimblePkg["version"].getStr
@@ -234,7 +235,6 @@ proc nimVersion*(): Version {.compileTime.} =
 proc dumpProject*(): Pkg {.compileTime.} =
   result = Pkg(pkgType: Main)
   let localNimble = parseJson(staticExec("nimble dump" & indent(getProjectPath() /../ "", 1) & " --json" ))
-  echo localNimble
   for k, v in pairs(localNimble):
     if k == "name":
       result.name = v.getStr
