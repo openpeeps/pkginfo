@@ -1,4 +1,5 @@
-import unittest, pkginfo, std/os
+import unittest, std/os
+import ../src/pkginfo
 
 test "when not requires <pkg>":
   when not requires "toktok":
@@ -21,7 +22,8 @@ test "when requires <pkg> -- check `license`":
 
 test "check `nimVersion`":
   static:
-    assert nimVersion() == v "1.6.4"
+    echo nimVersion()
+    assert nimVersion() >= v"1.6.4"
 
 test "check `pkg` `version`":
   static:

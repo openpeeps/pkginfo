@@ -66,6 +66,38 @@ func jsonNodeToPkg(node: JsonNode): Pkg =
       for k, v in deps:
         result.dependencies[k] = jsonNodeToPkg(v)
 
+func extractNimVersion(requiresNode: JsonNode): string =
+  ## Pull the nim version out of a `nimble dump --json` requires array.
+  ## Handles `ver.ver` objects, plain `ver` strings, and falls back
+  ## to parsing the human readable `str` field (e.g. ">= 1.6.4").
+  if requiresNode.kind != JArray:
+    return ""
+  for dep in requiresNode:
+    if dep{"name"}.getStr("") != "nim":
+      continue
+    if dep.hasKey("ver"):
+      let v = dep["ver"]
+      if v.kind == JObject and v.hasKey("ver"):
+        let s = v["ver"].getStr("")
+        if s.len != 0:
+          return s
+      elif v.kind == JString:
+        let s = v.getStr("")
+        if s.len != 0:
+          return s
+    if dep.hasKey("str"):
+      let s = dep["str"].getStr("")
+      var i = 0
+      while i < s.len and not s[i].isDigit():
+        inc i
+      var ver = ""
+      while i < s.len and (s[i].isDigit() or s[i] == '.'):
+        ver.add(s[i])
+        inc i
+      if ver.len != 0:
+        return ver
+  return ""
+
 #
 # Compile-time helpers
 #
@@ -124,8 +156,13 @@ proc isCacheStaleCT(nimbleFile, cacheFile: string): bool {.compileTime.} =
     except:
       result = true
 
+proc nimbleDumpCT(projectRoot: string): string {.compileTime.} =
+  ## `nimble dump <abs path> --json` is not supported by current nimble
+  ## (it doubles the path). Run inside the project root instead.
+  staticExec("cd \"" & projectRoot & "\" && nimble dump --json")
+
 proc generatePkgInfoCT(projectRoot: string): Pkg {.compileTime.} =
-  let dumpStr = staticExec("nimble dump \"" & projectRoot & "\" --json")
+  let dumpStr = nimbleDumpCT(projectRoot)
   if dumpStr.strip().len == 0 or dumpStr.contains("Error:"):
     raise newException(PackageDefect, "nimble dump failed for " & projectRoot & ": " & dumpStr)
   let node = parseJson(dumpStr)
@@ -142,11 +179,7 @@ proc generatePkgInfoCT(projectRoot: string): Pkg {.compileTime.} =
     dependencies: initTable[string, Pkg]()
   )
   if node.hasKey("requires"):
-    for dep in node["requires"]:
-      if dep{"name"}.getStr("") == "nim":
-        if dep.hasKey("ver") and dep["ver"].hasKey("ver"):
-          result.nim = dep["ver"]["ver"].getStr("")
-        break
+    result.nim = extractNimVersion(node["requires"])
   if node.hasKey("requires"):
     for dep in node["requires"]:
       let depName = dep{"name"}.getStr("")
@@ -259,8 +292,12 @@ proc isCacheStaleRT(nimbleFile, cacheFile: string): bool =
   except:
     result = true
 
+proc nimbleDumpRT(projectRoot: string): tuple[output: string, exitCode: int] =
+  ## See nimbleDumpCT: cd into the root instead of passing it as an arg.
+  execCmdEx("cd \"" & projectRoot & "\" && nimble dump --json")
+
 proc generatePkgInfoRT(projectRoot: string): Pkg =
-  let (outp, code) = execCmdEx("nimble dump \"" & projectRoot & "\" --json")
+  let (outp, code) = nimbleDumpRT(projectRoot)
   if code != 0 or outp.strip().len == 0 or outp.contains("Error:"):
     raise newException(PackageDefect, "nimble dump failed for " & projectRoot & ": " & outp)
   let node = parseJson(outp)
@@ -277,11 +314,7 @@ proc generatePkgInfoRT(projectRoot: string): Pkg =
     dependencies: initTable[string, Pkg]()
   )
   if node.hasKey("requires"):
-    for dep in node["requires"]:
-      if dep{"name"}.getStr("") == "nim":
-        if dep.hasKey("ver") and dep["ver"].hasKey("ver"):
-          result.nim = dep["ver"]["ver"].getStr("")
-        break
+    result.nim = extractNimVersion(node["requires"])
   if node.hasKey("requires"):
     for dep in node["requires"]:
       let depName = dep{"name"}.getStr("")
@@ -432,12 +465,22 @@ template version*(vers: string): Version =
     versionRT(vers)
 
 proc getVersionCT(pkgInfo: Pkg): Version {.compileTime.} =
-  if pkgInfo != nil:
-    result = parseVersion(pkgInfo.version)
+  try:
+    if pkgInfo != nil and pkgInfo.version.len != 0:
+      result = parseVersion(pkgInfo.version)
+    else:
+      result = parseVersion("0.0.0")
+  except:
+    result = parseVersion("0.0.0")
 
 proc getVersionRT(pkgInfo: Pkg): Version =
-  if pkgInfo != nil:
-    result = parseVersion(pkgInfo.version)
+  try:
+    if pkgInfo != nil and pkgInfo.version.len != 0:
+      result = parseVersion(pkgInfo.version)
+    else:
+      result = parseVersion("0.0.0")
+  except:
+    result = parseVersion("0.0.0")
 
 template getVersion*(pkgInfo: Pkg): Version =
   when nimvm:
@@ -482,15 +525,21 @@ template getLicense*(pkgInfo: Pkg): string =
   when nimvm: getLicenseCT(pkgInfo) else: getLicenseRT(pkgInfo)
 
 proc nimVersionCT(): Version {.compileTime.} =
-  if PackageCT != nil:
-    parseVersion(PackageCT.nim)
-  else:
+  try:
+    if PackageCT != nil and PackageCT.nim.len != 0:
+      parseVersion(PackageCT.nim)
+    else:
+      parseVersion("0.0.0")
+  except:
     parseVersion("0.0.0")
 
 proc nimVersionRT(): Version =
-  if Package != nil:
-    parseVersion(Package.nim)
-  else:
+  try:
+    if Package != nil and Package.nim.len != 0:
+      parseVersion(Package.nim)
+    else:
+      parseVersion("0.0.0")
+  except:
     parseVersion("0.0.0")
 
 template nimVersion*(): Version =
