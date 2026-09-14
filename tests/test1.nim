@@ -1,4 +1,4 @@
-import unittest, pkginfo
+import unittest, pkginfo, std/os
 
 test "when not requires <pkg>":
   when not requires "toktok":
@@ -17,7 +17,7 @@ test "when requires <pkg> -- check `version`":
 test "when requires <pkg> -- check `license`":
   when requires "semver":
     static:
-      assert pkg("semver").getLicense == "BSD3"
+      assert pkg("semver").getLicense == "BSD-3-Clause"
 
 test "check `nimVersion`":
   static:
@@ -30,3 +30,15 @@ test "check `pkg` `version`":
 test "check `pkg` `license`":
   static:
     assert pkg().getLicense == "MIT"
+
+test "runtime pkg access":
+  assert pkg().getName == "pkginfo"
+  assert pkg().getLicense == "MIT"
+  assert hasDep("semver")
+  assert pkg("semver").getVersion > v("1.1.1")
+  assert pkg("semver").getLicense == "BSD-3-Clause"
+  assert not hasDep("toktok")
+  assert pkg("toktok") == nil
+
+test "pkgToJson cache exists":
+  assert fileExists(".pkginfo.json") or fileExists("../.pkginfo.json")
