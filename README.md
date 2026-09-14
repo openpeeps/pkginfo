@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://tim-engine.github.io/tim/">API reference</a><br>
-  <img src="https://github.com/tim-engine/tim/workflows/test/badge.svg" alt="Github Actions">  <img src="https://github.com/tim-engine/tim/workflows/docs/badge.svg" alt="Github Actions">
+  <img src="https://github.com/openpeeps/pkginfo/workflows/test/badge.svg" alt="Github Actions">  <img src="https://github.com/openpeeps/pkginfo/workflows/docs/badge.svg" alt="Github Actions">
 </p>
 
 ## 😍 Key Features
