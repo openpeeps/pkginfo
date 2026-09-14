@@ -2,6 +2,15 @@
     📦 A tiny utility package to extract Nimble metadata from any <code>.nimble</code> package<br>
 </p>
 
+<p align="center">
+  <code>nimble install pkginfo</code> / <code>clue install pkginfo</code>
+</p>
+
+<p align="center">
+  <a href="https://tim-engine.github.io/tim/">API reference</a><br>
+  <img src="https://github.com/tim-engine/tim/workflows/test/badge.svg" alt="Github Actions">  <img src="https://github.com/tim-engine/tim/workflows/docs/badge.svg" alt="Github Actions">
+</p>
+
 ## 😍 Key Features
 - Read Nimble metadata at compile time and runtime
 - Query current package and direct dependencies
@@ -9,13 +18,6 @@
 - Semver helpers via re-exported `semver`
 - Fast `.pkginfo.json` cache
 - Safe by default, never breaks your build
-
-## Installing
-```
-clue install pkginfo
-```
-
-Requires `nim >= 1.6.4` and `semver >= 1.2.3`.
 
 ## Quick Start
 ```nim
